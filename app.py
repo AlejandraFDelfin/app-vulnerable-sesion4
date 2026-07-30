@@ -1,23 +1,28 @@
 from flask import Flask, request
 import sqlite3
+import os
 
 app = Flask(__name__)
-DB_PASSWORD = "admin123"  # Credencial hardcodeada (SAST)
 
-@app.route("/buscar")
+@app.route("/buscar", methods=["GET"])
 def buscar():
-    termino = request.args.get("q")
+    termino = request.args.get("q", "")
     conexion = sqlite3.connect("datos.db")
-    # Inyeccion SQL intencional (SAST)
-    consulta = "SELECT * FROM productos WHERE nombre = '" + termino + "'"
-    resultado = conexion.execute(consulta)
+    # Corrección: Uso de consultas parametrizadas contra inyección SQL
+    consulta = "SELECT * FROM productos WHERE nombre = ?"
+    resultado = conexion.execute(consulta, (termino,))
     return str(resultado.fetchall())
 
-@app.route("/calcular")
+@app.route("/calcular", methods=["GET"])
 def calcular():
-    expresion = request.args.get("expr")
-    # Uso inseguro de eval (SAST)
-    return str(eval(expresion))
+    # Corrección: Eliminación de eval() por operaciones seguras
+    try:
+        num1 = int(request.args.get("num1", 0))
+        num2 = int(request.args.get("num2", 0))
+        return str(num1 + num2)
+    except ValueError:
+        return "Por favor ingresa números válidos."
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
+    # En desarrollo local usamos localhost de forma segura
+    app.run(host="127.0.0.1", port=8080)
