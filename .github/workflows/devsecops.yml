@@ -29,10 +29,22 @@ jobs:
 
   sca:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
-      - uses: snyk/actions/python@master
+
+      - uses: actions/setup-python@v5
         with:
-          args: --severity-threshold=high
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Snyk Scan
+        uses: snyk/actions/python@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
